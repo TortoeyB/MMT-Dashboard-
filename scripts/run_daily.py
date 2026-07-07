@@ -89,6 +89,7 @@ def main():
             print(f"[warn] ธีม {t['name']}: ประวัติสั้นเกิน — ข้าม")
             continue
         hist = [round(float(v), 1) for v in th_score.tail(HIST_LEN)]
+        hist_dates = [d.strftime("%d %b") for d in th_score.tail(HIST_LEN).index]
 
         d5 = th_score.iloc[-1] - th_score.iloc[-6]
         d5_prev = th_score.iloc[-6] - th_score.iloc[-11]
@@ -118,6 +119,7 @@ def main():
             "etf": ref,
             "members": members,
             "score_hist": hist,
+            "score_dates": hist_dates,
             "sub": sub,
             "adx_mult": adx_mult,
             "px_hist": [round(float(v), 2) for v in px],
