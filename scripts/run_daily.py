@@ -20,7 +20,7 @@ import numpy as np
 import pandas as pd
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from fetch_data import ROOT, load_themes, get_data
+from fetch_data import ROOT, load_themes, get_data, parse_tv_watchlist
 from scoring import score_series, quadrant, price_structure, significant_pattern, signal
 
 TAIL_LEN = 8        # จำนวนจุดของหางบนกราф RRG
@@ -64,6 +64,18 @@ def main():
     wl = os.path.join(ROOT, "watchlist.txt")
     data = get_data(cfg, demo=demo, watchlist=wl if os.path.exists(wl) else None,
                     force=force)
+
+    # symbol จาก watchlist ที่ไม่อยู่ในธีมไหนเลย → รวมเป็นธีม "Watchlist (TV)"
+    if os.path.exists(wl):
+        in_themes = set()
+        for t in cfg["themes"]:
+            in_themes.update(t["etfs"]); in_themes.update(t["stocks"])
+        extras = [x for x in parse_tv_watchlist(wl)
+                  if x not in in_themes and x in data]
+        if extras:
+            print(f"[watchlist] เพิ่มธีม Watchlist (TV): {', '.join(extras)}")
+            cfg["themes"].append({"name": "Watchlist (TV)",
+                                  "etfs": [], "stocks": extras})
     if not data:
         raise SystemExit("ไม่มีข้อมูลราคาเลย — ตรวจการเชื่อมต่อ/รายชื่อ symbol")
 
