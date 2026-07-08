@@ -40,6 +40,9 @@ button.tg{background:var(--card2);border:1px solid var(--border);color:var(--ink
   border-radius:8px;padding:5px 13px;font-size:13px;cursor:pointer;font-family:inherit}
 button.tg.on{color:var(--ink);border-color:var(--accent)}
 button.tg:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.wlin{background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--ink);
+  padding:7px 10px;font-size:13px;font-family:inherit}
+.wlin:focus{outline:2px solid var(--accent);outline-offset:1px}
 #legend{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:13px;color:var(--ink2);margin:10px 0 6px}
 #legend .chip{display:flex;align-items:center;gap:5px;cursor:pointer;padding:1px 2px;border-radius:4px}
 #legend .chip.hide{opacity:.32}
@@ -151,6 +154,33 @@ footer{margin-top:34px;color:var(--ink3);font-size:12.5px;border-top:1px solid v
     </tr></thead><tbody></tbody></table>
   </div>
 
+    <details class="guide" style="margin-top:22px">
+      <summary>📥 อัปเดต Watchlist จาก TradingView — อัปโหลดตรงนี้ได้เลย</summary>
+      <div class="guide-body">
+        <div style="margin-bottom:10px">วางไฟล์ .txt ที่ export จาก TradingView (เมนู ⋯ → Export list)
+          หรือ paste รายชื่อ symbol ลงช่องด้านล่าง → กดอัปโหลด ระบบจะ commit เข้า repo
+          และสั่งรันคำนวณให้อัตโนมัติ (เสร็จใน ~2–3 นาที แล้วรีเฟรชหน้านี้)</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
+          <input id="wlOwner" placeholder="owner" style="width:130px" class="wlin">
+          <input id="wlRepo" placeholder="repo" style="width:170px" class="wlin">
+          <input id="wlTok" type="password" placeholder="GitHub token (fine-grained)" style="flex:1;min-width:220px" class="wlin">
+          <label style="display:flex;align-items:center;gap:5px;font-size:12.5px;color:var(--ink3)">
+            <input type="checkbox" id="wlRemember" checked>จำ token ในเบราว์เซอร์นี้</label>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-start">
+          <input type="file" id="wlFile" accept=".txt" style="color:var(--ink3);font-size:12.5px">
+          <textarea id="wlText" rows="2" placeholder="หรือ paste เช่น NASDAQ:NVDA, AMEX:SMH, NYSE:UBER"
+            style="flex:1;min-width:240px" class="wlin"></textarea>
+          <button class="tg on" id="wlGo" style="padding:8px 18px">อัปโหลด & รันอัปเดต</button>
+        </div>
+        <div id="wlStatus" style="margin-top:8px;font-size:13px;color:var(--ink3)"></div>
+        <div style="margin-top:8px;font-size:12px;color:var(--ink3)">
+          🔑 สร้าง token ครั้งเดียวที่ github.com → Settings → Developer settings →
+          Fine-grained tokens → เลือกเฉพาะ repo นี้ → Permissions: <b>Contents = Read and write</b>,
+          <b>Actions = Read and write</b> · token อยู่แค่ในเบราว์เซอร์ของคุณ ส่งตรงหา GitHub เท่านั้น</div>
+      </div>
+    </details>
+
   <footer>
     ระบบนี้จัดระเบียบสัญญาณ technical เพื่อประกอบการตัดสินใจเท่านั้น ไม่ใช่คำแนะนำการลงทุน ·
     คะแนน: Cipher B 35% / Hull 25% / MA50 20% / MA200 20% + ADX เป็นตัวคูณ ·
@@ -181,6 +211,7 @@ function init(){
   app.innerHTML='';app.appendChild(document.getElementById('tpl').content.cloneNode(true));
   [1,3,5,10].forEach(v=>document.getElementById('b'+v).onclick=()=>{lag=v;tgl();render();});
   document.getElementById('bsig').onclick=e=>{sigOnly=!sigOnly;e.target.classList.toggle('on',sigOnly);render();};
+  wlInit();
   document.querySelectorAll('#t1 th').forEach(th=>th.onclick=()=>{const k=th.dataset.k;
     if(sortK===k)sortAsc=!sortAsc;else{sortK=k;sortAsc=(k==='name');}renderTables();});
   render();
@@ -295,6 +326,50 @@ function renderTables(){
       <td>${fp(t.chg.d1)}</td><td>${fp(t.chg.d3)}</td><td>${fp(t.chg.d5)}</td><td>${fp(t.chg.d10)}</td>
       <td class="l"><span class="pb t${st.tone}">${st.label}</span></td>
       <td class="l">${pt?`<span class="pb t${pt.tone}">🕯 ${pt.label}</span>`:'<span class="mut">–</span>'}</td></tr>`);});
+}
+
+
+// ---------- อัปโหลด watchlist ผ่าน GitHub API ----------
+function wlInit(){
+  const seg=location.pathname.split('/').filter(Boolean);
+  const owner=location.hostname.endsWith('.github.io')?location.hostname.split('.')[0]:'';
+  document.getElementById('wlOwner').value=localStorage.getItem('wl_owner')||owner;
+  document.getElementById('wlRepo').value=localStorage.getItem('wl_repo')||seg[0]||'';
+  document.getElementById('wlTok').value=localStorage.getItem('wl_token')||'';
+  document.getElementById('wlGo').onclick=wlUpload;
+}
+async function wlUpload(){
+  const st=document.getElementById('wlStatus');
+  const o=document.getElementById('wlOwner').value.trim();
+  const r=document.getElementById('wlRepo').value.trim();
+  const tok=document.getElementById('wlTok').value.trim();
+  if(!o||!r||!tok){st.textContent='กรอก owner / repo / token ให้ครบก่อนครับ';return;}
+  let text=document.getElementById('wlText').value.trim();
+  const f=document.getElementById('wlFile').files[0];
+  if(f) text=await f.text();
+  if(!text){st.textContent='ยังไม่มีรายชื่อ — เลือกไฟล์หรือ paste ก่อนครับ';return;}
+  if(document.getElementById('wlRemember').checked){
+    localStorage.setItem('wl_token',tok);localStorage.setItem('wl_owner',o);localStorage.setItem('wl_repo',r);
+  }else localStorage.removeItem('wl_token');
+  const H={'Authorization':'Bearer '+tok,'Accept':'application/vnd.github+json'};
+  const api=`https://api.github.com/repos/${o}/${r}/contents/watchlist.txt`;
+  try{
+    st.textContent='กำลัง commit watchlist.txt ...';
+    let sha=null;
+    const g=await fetch(api,{headers:H});
+    if(g.ok) sha=(await g.json()).sha;
+    else if(g.status===401){st.textContent='❌ token ไม่ถูกต้องหรือหมดอายุ (401)';return;}
+    const body={message:'watchlist: update via dashboard',
+      content:btoa(unescape(encodeURIComponent(text)))};
+    if(sha) body.sha=sha;
+    const p=await fetch(api,{method:'PUT',headers:H,body:JSON.stringify(body)});
+    if(!p.ok){st.textContent='❌ commit ไม่สำเร็จ ('+p.status+') — เช็กสิทธิ์ Contents ของ token';return;}
+    st.textContent='✅ commit แล้ว · กำลังสั่งรัน workflow ...';
+    const d=await fetch(`https://api.github.com/repos/${o}/${r}/actions/workflows/update.yml/dispatches`,
+      {method:'POST',headers:H,body:JSON.stringify({ref:'main'})});
+    if(d.status===204) st.textContent='✅ เรียบร้อย! ระบบกำลังดึงข้อมูล+คำนวณ (~2–3 นาที) เสร็จแล้วรีเฟรชหน้านี้ (Ctrl+Shift+R) — ตัวใหม่จะอยู่ในธีม "Watchlist (TV)"';
+    else st.textContent='⚠️ commit สำเร็จ แต่สั่งรัน workflow ไม่ได้ ('+d.status+') — เช็กสิทธิ์ Actions ของ token หรือไปกด Run workflow เองในแท็บ Actions';
+  }catch(e){st.textContent='❌ '+e.message;}
 }
 
 function spark(px){
