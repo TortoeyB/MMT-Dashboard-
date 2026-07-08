@@ -19,7 +19,31 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CACHE = os.path.join(ROOT, "data", "cache")
 os.makedirs(CACHE, exist_ok=True)
 
-HISTORY_DAYS = 400  # ปฏิทิน ~ 270+ วันทำการ (พอสำหรับ MA200 + buffer)
+HISTORY_DAYS = 400
+
+# รหัสดัชนี/FX/commodity ของ TradingView → ticker ของ Yahoo Finance
+TV_TO_YAHOO = {
+    # ดัชนี US
+    "SPX": "^GSPC", "IXIC": "^IXIC", "DJI": "^DJI", "RUT": "^RUT", "VIX": "^VIX",
+    # ดัชนีต่างประเทศ
+    "NI225": "^N225", "HSI": "^HSI", "HSTECH": "^HSTECH", "KOSPI": "^KS11",
+    "SENSEX": "^BSESN", "NIFTY": "^NSEI", "SX5E": "^STOXX50E", "SXXP": "^STOXX",
+    "000300": "000300.SS", "000905": "000905.SS",
+    # ค่าเงิน
+    "USDTHB": "THB=X", "JPYTHB": "JPYTHB=X", "EURTHB": "EURTHB=X",
+    "DXY": "DX-Y.NYB",
+    # bond yield (Yahoo คูณ 10 เช่น ^TNX = 10Y yield x10)
+    "US10Y": "^TNX", "US30Y": "^TYX", "US02Y": "^IRX",
+    # commodity futures
+    "USOIL": "CL=F", "BRENT": "BZ=F", "COPPER": "HG=F", "SILVER": "SI=F",
+    "GOLD": "GC=F", "NATGAS": "NG=F",
+    # crypto
+    "BTCUSD": "BTC-USD", "ETHUSD": "ETH-USD",
+}
+# รหัสที่รู้ว่า Yahoo ไม่มีแน่ๆ — ข้ามเงียบๆ ไม่ต้องพยายามดึง
+TV_SKIP = {"SET", "SET50", "TOPIX", "VNINDEX", "VN30", "SILV", "ISAG",
+           "CNYTHB", "3032"}
+  # ปฏิทิน ~ 270+ วันทำการ (พอสำหรับ MA200 + buffer)
 
 
 def load_themes(path: str | None = None) -> dict:
@@ -44,7 +68,10 @@ def parse_tv_watchlist(path: str) -> list[str]:
         if not tok or tok.startswith("#"):
             continue
         sym = tok.split(":")[-1].strip().upper()   # ตัด "NASDAQ:" ฯลฯ
-        if re.fullmatch(r"[A-Z0-9.\-]{1,10}", sym):
+        if sym in TV_SKIP or re.fullmatch(r"S50[A-Z]\d{4}", sym):  # futures ไทย ฯลฯ
+            continue
+        sym = TV_TO_YAHOO.get(sym, sym)
+        if re.fullmatch(r"[A-Z0-9.^=\-]{1,12}", sym):
             out.append(sym)
     return sorted(set(out))
 
@@ -97,6 +124,20 @@ def fetch_ohlcv(symbols: list[str], force: bool = False) -> dict[str, pd.DataFra
                 data[s] = df
             except Exception as e:  # noqa
                 print(f"[warn] {s}: ดึงไม่สำเร็จ ({e}) — ข้าม")
+        # retry ตัวที่หลุด (เช่น database is locked จากการดึงพร้อมกัน) ทีละตัว
+        missing = [s for s in to_fetch if s not in data]
+        for s in missing:
+            try:
+                df = yf.download(s, period=f"{HISTORY_DAYS}d", interval="1d",
+                                 auto_adjust=True, progress=False, threads=False)
+                df = df.droplevel(1, axis=1) if hasattr(df.columns, "levels") else df
+                df = df[["Open", "High", "Low", "Close", "Volume"]].dropna()
+                if len(df) >= 60:
+                    df.to_parquet(os.path.join(CACHE, f"{s}.parquet"))
+                    data[s] = df
+                    print(f"[retry] {s}: สำเร็จรอบสอง")
+            except Exception:  # noqa
+                pass
     return data
 
 
