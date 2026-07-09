@@ -1,6 +1,6 @@
 # Technical Score Rotation — RRG Dashboard
 
-Dashboard สไตล์ RRG ที่เปลี่ยนแกนจาก "ราคาเทียบ SPY" เป็น **คะแนน technical รวม**
+Dashboard สไตล์ Relative Rotation Graph " เป็น **คะแนนของการเปลี่ยนแปลง technical รวม**
 (Cipher B / Hull 9-20 / MA50 / MA200 + ADX เป็นตัวคูณ) พร้อม buy/sell signal
 แบบ checklist, price structure และ candlestick pattern
 
