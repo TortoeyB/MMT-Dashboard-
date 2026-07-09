@@ -45,9 +45,13 @@ def symbol_payload(sym: str, sc: pd.DataFrame, df: pd.DataFrame, name: str = "")
     sc2["close"] = df["Close"]
     patt = significant_pattern(sc2)
     sig = signal(sc, q_now, q_prev, struct, patt)
+    last = sc.iloc[-1]
     return {
         "sym": sym,
         "name": name,
+        "sub": {k: round(float(last[f"{k}_sc"]), 1)
+                for k in ("cipher", "hull", "ma50", "ma200")},
+        "adx_mult": round(float(last["adx_mult"]), 2),
         "score": round(float(s.iloc[-1]), 1),
         "delta5": round(d5, 1),
         "quadrant": q_now,
