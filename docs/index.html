@@ -56,6 +56,8 @@ td{padding:7px 6px;text-align:right;border-top:1px solid var(--border);white-spa
 tr.theme{cursor:pointer}
 tr.theme:hover td{background:var(--card2)}
 tr.member td{background:#0e1319;color:var(--ink2);font-size:13px}
+.ellip{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+tr.member .nm{color:var(--ink);font-weight:500}
 tr.member td:first-child{padding-left:26px}
 .pos{color:var(--lead)} .neg{color:var(--lag)} .mut{color:var(--ink3)}
 .q-Leading{background:rgba(34,197,94,.14);color:var(--lead)}
@@ -316,7 +318,7 @@ function renderTables(){
       <td class="l"><span class="pill q-${r.q}">${r.q}</span></td>
       <td class="l">${sigPill(t.signal)}</td></tr>`);
     t.symbols.forEach(s=>{t1.insertAdjacentHTML('beforeend',`<tr class="member" data-p="${i}" hidden>
-      <td class="l mono">${s.sym}</td><td colspan="4" class="l mut">${s.structure.label}${s.pattern?' · '+s.pattern.label:''}</td>
+      <td class="l mono">${s.sym}</td><td colspan="4" class="l mut ellip">${s.name?`<span class="nm">${s.name}</span> · `:''}${s.structure.label}${s.pattern?' · '+s.pattern.label:''}</td>
       <td></td><td class="mono">${Math.round(s.score)}</td>
       <td class="mono ${s.delta5>=0?'pos':'neg'}">${s.delta5>=0?'+':''}${Math.round(s.delta5)}</td>
       <td class="l"><span class="pill q-${s.quadrant}">${s.quadrant}</span></td>
