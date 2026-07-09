@@ -2,8 +2,9 @@ name: Update dashboard data
 
 on:
   schedule:
-    - cron: "30 21 * * 1-5"   # หลังตลาด US ปิด ~04:30 เช้าเวลาไทย
-  workflow_dispatch: {}        # กดรันเองได้
+    # 21:30 UTC = หลังตลาด US ปิด (จ.-ศ.) — ตรงกับ ~04:30 เช้าเวลาไทย
+    - cron: "30 21 * * 1-5"
+  workflow_dispatch: {}   # กดรันเองได้จากหน้า Actions
 
 permissions:
   contents: write
@@ -22,6 +23,6 @@ jobs:
         run: |
           git config user.name "rrg-bot"
           git config user.email "actions@github.com"
-          git add docs/data.json backup/
+          git add docs/data.json backup/ data/names.json
           git diff --cached --quiet || git commit -m "data: update $(date -u +%F)"
           git push
