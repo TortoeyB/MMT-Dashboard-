@@ -20,7 +20,7 @@ import numpy as np
 import pandas as pd
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from fetch_data import ROOT, load_themes, get_data, parse_tv_watchlist
+from fetch_data import ROOT, load_themes, get_data, parse_tv_watchlist, load_names
 from scoring import score_series, quadrant, price_structure, significant_pattern, signal
 
 TAIL_LEN = 8        # จำนวนจุดของหางบนกราф RRG
@@ -34,7 +34,7 @@ def pct_change(px: pd.Series, d: int) -> float:
     return round(float(px.iloc[-1] / px.iloc[-1 - d] - 1) * 100, 2)
 
 
-def symbol_payload(sym: str, sc: pd.DataFrame, df: pd.DataFrame) -> dict:
+def symbol_payload(sym: str, sc: pd.DataFrame, df: pd.DataFrame, name: str = "") -> dict:
     s = sc["score"]
     d5 = float(s.iloc[-1] - s.iloc[-6]) if len(s) > 5 else 0.0
     d5_prev = float(s.iloc[-6] - s.iloc[-11]) if len(s) > 10 else 0.0
@@ -47,6 +47,7 @@ def symbol_payload(sym: str, sc: pd.DataFrame, df: pd.DataFrame) -> dict:
     sig = signal(sc, q_now, q_prev, struct, patt)
     return {
         "sym": sym,
+        "name": name,
         "score": round(float(s.iloc[-1]), 1),
         "delta5": round(d5, 1),
         "quadrant": q_now,
@@ -78,6 +79,8 @@ def main():
                                   "etfs": [], "stocks": extras})
     if not data:
         raise SystemExit("ไม่มีข้อมูลราคาเลย — ตรวจการเชื่อมต่อ/รายชื่อ symbol")
+
+    names = load_names(list(data.keys()), demo=demo)
 
     print("[calc] คำนวณ indicator + คะแนนรายตัว ...")
     scores: dict[str, pd.DataFrame] = {}
@@ -140,7 +143,7 @@ def main():
             "pattern": patt,
             "signal": sig,
             "quadrant": q_now,
-            "symbols": [symbol_payload(s, scores[s], data[s])
+            "symbols": [symbol_payload(s, scores[s], data[s], names.get(s, ""))
                         for s in (t["etfs"] + t["stocks"]) if s in scores],
         })
 
