@@ -8,6 +8,7 @@ fetch_data.py — โหลดรายชื่อ symbol และดึง OH
 - โหมด --demo สร้างข้อมูลจำลอง (ใช้ทดสอบ pipeline โดยไม่ต้องต่อเน็ต)
 """
 
+import json
 import os
 import re
 import sys
@@ -39,6 +40,20 @@ TV_TO_YAHOO = {
     "GOLD": "GC=F", "NATGAS": "NG=F",
     # crypto
     "BTCUSD": "BTC-USD", "ETHUSD": "ETH-USD",
+}
+# ชื่อสำเร็จรูป (ตัวที่ชื่อบน Yahoo อ่านยากหรือดึงไม่ได้)
+NAME_OVERRIDES = {
+    "^GSPC": "S&P 500 Index", "^IXIC": "Nasdaq Composite", "^DJI": "Dow Jones Industrial",
+    "^RUT": "Russell 2000", "^VIX": "CBOE Volatility Index", "^N225": "Nikkei 225",
+    "^HSI": "Hang Seng Index", "^HSTECH": "Hang Seng Tech", "^KS11": "KOSPI Composite",
+    "^BSESN": "BSE Sensex", "^NSEI": "Nifty 50", "^STOXX50E": "Euro Stoxx 50",
+    "^STOXX": "Stoxx Europe 600", "000300.SS": "CSI 300 (จีน)", "000905.SS": "CSI 500 (จีน)",
+    "THB=X": "USD/THB", "JPYTHB=X": "JPY/THB", "EURTHB=X": "EUR/THB",
+    "DX-Y.NYB": "US Dollar Index (DXY)", "^TNX": "US 10Y Yield (x10)",
+    "^TYX": "US 30Y Yield (x10)", "^IRX": "US 13W Yield",
+    "CL=F": "WTI Crude Oil", "BZ=F": "Brent Crude Oil", "HG=F": "Copper Futures",
+    "SI=F": "Silver Futures", "GC=F": "Gold Futures", "NG=F": "Natural Gas",
+    "BTC-USD": "Bitcoin", "ETH-USD": "Ethereum",
 }
 # รหัสที่รู้ว่า Yahoo ไม่มีแน่ๆ — ข้ามเงียบๆ ไม่ต้องพยายามดึง
 TV_SKIP = {"SET", "SET50", "TOPIX", "VNINDEX", "VN30", "SILV", "ISAG",
@@ -168,6 +183,33 @@ def synth_ohlcv(symbols: list[str], n: int = 300) -> dict[str, pd.DataFrame]:
         data[s] = pd.DataFrame({"Open": o, "High": h, "Low": l,
                                 "Close": close, "Volume": v}, index=idx)
     return data
+
+
+def load_names(symbols: list[str], demo: bool = False) -> dict[str, str]:
+    """ชื่อเต็มของแต่ละ ticker — cache ใน data/names.json ดึงเฉพาะตัวที่ยังไม่มี"""
+    path = os.path.join(ROOT, "data", "names.json")
+    names: dict[str, str] = {}
+    if os.path.exists(path):
+        try:
+            names = json.load(open(path, encoding="utf-8"))
+        except Exception:  # noqa
+            names = {}
+    for k, v in NAME_OVERRIDES.items():
+        names.setdefault(k, v)
+    missing = [s for s in symbols if not names.get(s)]
+    if missing and not demo:
+        import yfinance as yf
+        print(f"[names] ดึงชื่อเต็ม {len(missing)} symbols ...")
+        for s in missing:
+            try:
+                info = yf.Ticker(s).info
+                names[s] = info.get("longName") or info.get("shortName") or ""
+            except Exception:  # noqa
+                names[s] = ""
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(names, f, ensure_ascii=False, indent=0, sort_keys=True)
+    return names
 
 
 def get_data(cfg: dict, demo: bool = False, watchlist: str | None = None,
