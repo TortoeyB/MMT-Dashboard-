@@ -370,7 +370,9 @@ function renderChart(rows){
           label:c=>`${c.dataset.label} · คะแนน ${Math.round(c.raw.x)} · Δ ${c.raw.y>=0?'+':''}${c.raw.y}`}}},
       interaction:{mode:'nearest',intersect:false}},plugins:[qplug]});}
   const lg=document.getElementById('legend');lg.innerHTML='';
-  rows.forEach(r=>{const c=document.createElement('span');
+  const QORD={Leading:0,Improving:1,Weakening:2,Lagging:3};
+  [...rows].sort((a,b)=>(QORD[a.q]-QORD[b.q])||a.t.name.localeCompare(b.t.name))
+   .forEach(r=>{const c=document.createElement('span');
     c.className='chip'+(hidden.has(r.t.name)?' hide':'');
     c.innerHTML=`<span style="width:9px;height:9px;border-radius:50%;flex:none;background:${QC[r.q]}"></span>${r.t.name}`;
     c.onclick=()=>{hidden.has(r.t.name)?hidden.delete(r.t.name):hidden.add(r.t.name);render();};
