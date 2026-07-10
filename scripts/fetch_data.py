@@ -82,10 +82,14 @@ def parse_tv_watchlist(path: str) -> list[str]:
         tok = tok.strip()
         if not tok or tok.startswith("#"):
             continue
-        sym = tok.split(":")[-1].strip().upper()   # ตัด "NASDAQ:" ฯลฯ
-        if sym in TV_SKIP or re.fullmatch(r"S50[A-Z]\d{4}", sym):  # futures ไทย ฯลฯ
+        parts = [x.strip().upper() for x in tok.split(":")]
+        sym, ex = parts[-1], (parts[0] if len(parts) > 1 else "")
+        if sym in TV_SKIP or re.fullmatch(r"S50[A-Z]\d{4}", sym):  # ดัชนี/futures ไทย ฯลฯ
             continue
-        sym = TV_TO_YAHOO.get(sym, sym)
+        if sym in TV_TO_YAHOO:
+            sym = TV_TO_YAHOO[sym]
+        elif ex == "SET" and not sym.endswith(".BK"):   # หุ้น/DR ตลาดไทย → suffix ของ Yahoo
+            sym += ".BK"
         if re.fullmatch(r"[A-Z0-9.^=\-]{1,12}", sym):
             out.append(sym)
     return sorted(set(out))
@@ -105,8 +109,9 @@ def load_watchlists(demo: bool = False) -> dict[str, list[str]]:
     legacy = os.path.join(ROOT, "watchlist.txt")
     if os.path.exists(legacy):
         syms = parse_tv_watchlist(legacy)
-        if syms:
-            out.setdefault("Watchlist", syms)
+        # ไม่เพิ่มถ้ามีลิสต์ชื่อ watchlist อยู่แล้ว (กัน tab ซ้ำต่างตัวพิมพ์)
+        if syms and not any(k.lower() == "watchlist" for k in out):
+            out["Watchlist"] = syms
     if out:
         print(f"[watchlist] พบ {len(out)} ลิสต์: {', '.join(out)}")
     return out
