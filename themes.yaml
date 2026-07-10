@@ -1,128 +1,322 @@
 # =============================================================
 # themes.yaml — โครงสร้างธีมของ dashboard
-# แก้ไฟล์นี้เพื่อเพิ่ม/ลดธีม, ETF หรือหุ้นรายตัวได้เลย
-#
-# โครงสร้างแต่ละธีม:
-#   - name:    ชื่อธีมที่แสดงบน dashboard
-#     etfs:    ETF ตัวแทน (ตัวแรกใช้เป็น "ราคาอ้างอิง" ของธีม
-#              สำหรับ price action / แท่งเทียน)
-#     stocks:  หุ้นรายตัว — คะแนนธีม = ค่าเฉลี่ยแบบ equal-weight
-#              ของหุ้นเหล่านี้ (ถ้าไม่มี stocks จะใช้ ETF แทน)
+#   group:  ใช้สร้างปุ่มกรองกลุ่มบนกราฟอัตโนมัติ (แก้/เพิ่มกลุ่มได้เอง)
+#   etfs:   ETF ตัวแทน (ตัวแรก = ราคาอ้างอิงของธีม)
+#   stocks: หุ้นสมาชิก — คะแนนธีม = ค่าเฉลี่ย equal-weight
 # =============================================================
-
 benchmark: SPY
-
 themes:
-  - name: Semiconductors
-    etfs: [SMH, SOXX]
-    stocks: [NVDA, AMD, AVGO, TSM, QCOM, TXN, INTC, MRVL]
-
-  - name: Semi Equip & Memory
-    etfs: [SMH]
-    stocks: [MU, WDC, STX, AMAT, LRCX, KLAC, ASML]
-
-  - name: Software
-    etfs: [IGV, XSW]
-    stocks: [MSFT, ORCL, CRM, ADBE, NOW, PLTR, INTU, SNPS, CDNS]
-
-  - name: Mag 7
-    etfs: [MAGS]
-    stocks: [AAPL, MSFT, NVDA, AMZN, GOOGL, META, TSLA]
-
-  - name: Cybersecurity
-    etfs: [CIBR, HACK, BUG]
-    stocks: [CRWD, PANW, FTNT, ZS, OKTA]
-
-  - name: Genomics
-    etfs: [ARKG, IDNA]
-    stocks: [CRSP, EDIT, BEAM, NTLA, ILMN, RXRX, TWST, PACB]
-
-  - name: Biotech Large
-    etfs: [IBB, XBI]
-    stocks: [AMGN, GILD, VRTX, REGN, BIIB]
-
-  - name: Pharma & Managed Care
-    etfs: [IHE, XLV]
-    stocks: [LLY, UNH, JNJ, MRK, ABBV, PFE]
-
-  - name: Defense
-    etfs: [ITA, XAR, PPA]
-    stocks: [LMT, RTX, NOC, GD, LHX]
-
-  - name: Energy
-    etfs: [XLE, XOP, OIH]
-    stocks: [XOM, CVX, COP, SLB, EOG]
-
-  - name: Banks & Brokers
-    etfs: [KBWB, KBE, IAI]
-    stocks: [JPM, GS, MS, BAC, WFC]
-
-  - name: Staples
-    etfs: [XLP]
-    stocks: [PG, KO, PEP, COST, WMT]
-
-  - name: Utilities & Power
-    etfs: [XLU, GRID]
-    stocks: [NEE, DUK, SO, VST, CEG]
-
-  - name: Materials
-    etfs: [XLB]
-    stocks: [LIN, FCX, NUE, SHW, APD]
-
-  - name: AI Infra & Data Center
-    etfs: [AIQ, DTCR]
-    stocks: [VRT, ETN, ANET, SMCI, DELL, CIEN]
-
-  - name: Quantum
-    etfs: [QTUM]
-    stocks: [IONQ, RGTI, QBTS]
-
-  - name: Nuclear & Uranium
-    etfs: [URA, NLR, URNM]
-    stocks: [CCJ, OKLO, SMR, LEU, BWXT]
-
-  - name: Gold Miners
-    etfs: [GDX, GDXJ, GLD]
-    stocks: [NEM, AEM, GOLD, WPM]
-
-  - name: Solar
-    etfs: [TAN, ICLN]
-    stocks: [FSLR, ENPH, NXT, RUN]
-
-  - name: Crypto-linked
-    etfs: [IBIT, DAPP, WGMI]
-    stocks: [COIN, MSTR, HOOD, MARA, RIOT]
-
-  - name: Space & Drones
-    etfs: [ARKX, UFO]
-    stocks: [RKLB, ASTS, AVAV, KTOS, LUNR]
-
-  - name: China Tech ADR
-    etfs: [KWEB, CQQQ]
-    stocks: [BABA, PDD, BIDU, JD, BEKE]
-
-  - name: Homebuilders
-    etfs: [ITB, XHB]
-    stocks: [DHI, LEN, PHM, TOL, NVR]
-
-  - name: Travel & Airlines
-    etfs: [JETS, PEJ]
-    stocks: [BKNG, ABNB, MAR, DAL, UAL, RCL]
-
-  - name: Fintech & Payments
-    etfs: [IPAY, FINX]
-    stocks: [V, MA, PYPL, AXP, COF]
-
-  # ------- Sector ETF (ไม่มีหุ้นรายตัว ใช้ ETF ตรงๆ) -------
-  - name: Tech (XLK)
-    etfs: [XLK]
-  - name: Financials (XLF)
-    etfs: [XLF]
-  - name: Industrials (XLI)
-    etfs: [XLI]
-  - name: Cons Discret (XLY)
-    etfs: [XLY]
-  - name: Comm Svcs (XLC)
-    etfs: [XLC]
-  - name: Real Estate (XLRE)
-    etfs: [XLRE]
+- name: Semiconductors
+  etfs:
+  - SMH
+  - SOXX
+  stocks:
+  - NVDA
+  - AMD
+  - AVGO
+  - TSM
+  - QCOM
+  - TXN
+  - INTC
+  - MRVL
+  group: Tech & AI
+- name: Semi Equip & Memory
+  etfs:
+  - SMH
+  stocks:
+  - MU
+  - WDC
+  - STX
+  - AMAT
+  - LRCX
+  - KLAC
+  - ASML
+  group: Tech & AI
+- name: Software
+  etfs:
+  - IGV
+  - XSW
+  stocks:
+  - MSFT
+  - ORCL
+  - CRM
+  - ADBE
+  - NOW
+  - PLTR
+  - INTU
+  - SNPS
+  - CDNS
+  group: Tech & AI
+- name: Mag 7
+  etfs:
+  - MAGS
+  stocks:
+  - AAPL
+  - MSFT
+  - NVDA
+  - AMZN
+  - GOOGL
+  - META
+  - TSLA
+  group: Tech & AI
+- name: Cybersecurity
+  etfs:
+  - CIBR
+  - HACK
+  - BUG
+  stocks:
+  - CRWD
+  - PANW
+  - FTNT
+  - ZS
+  - OKTA
+  group: Tech & AI
+- name: Genomics
+  etfs:
+  - ARKG
+  - IDNA
+  stocks:
+  - CRSP
+  - EDIT
+  - BEAM
+  - NTLA
+  - ILMN
+  - RXRX
+  - TWST
+  - PACB
+  group: Health & Bio
+- name: Biotech Large
+  etfs:
+  - IBB
+  - XBI
+  stocks:
+  - AMGN
+  - GILD
+  - VRTX
+  - REGN
+  - BIIB
+  group: Health & Bio
+- name: Pharma & Managed Care
+  etfs:
+  - IHE
+  - XLV
+  stocks:
+  - LLY
+  - UNH
+  - JNJ
+  - MRK
+  - ABBV
+  - PFE
+  group: Health & Bio
+- name: Defense
+  etfs:
+  - ITA
+  - XAR
+  - PPA
+  stocks:
+  - LMT
+  - RTX
+  - NOC
+  - GD
+  - LHX
+  group: Global & Alt
+- name: Energy
+  etfs:
+  - XLE
+  - XOP
+  - OIH
+  stocks:
+  - XOM
+  - CVX
+  - COP
+  - SLB
+  - EOG
+  group: พลังงาน & วัตถุดิบ
+- name: Banks & Brokers
+  etfs:
+  - KBWB
+  - KBE
+  - IAI
+  stocks:
+  - JPM
+  - GS
+  - MS
+  - BAC
+  - WFC
+  group: การเงิน
+- name: Staples
+  etfs:
+  - XLP
+  stocks:
+  - PG
+  - KO
+  - PEP
+  - COST
+  - WMT
+  group: บริโภค & Defensive
+- name: Utilities & Power
+  etfs:
+  - XLU
+  - GRID
+  stocks:
+  - NEE
+  - DUK
+  - SO
+  - VST
+  - CEG
+  group: บริโภค & Defensive
+- name: Materials
+  etfs:
+  - XLB
+  stocks:
+  - LIN
+  - FCX
+  - NUE
+  - SHW
+  - APD
+  group: พลังงาน & วัตถุดิบ
+- name: AI Infra & Data Center
+  etfs:
+  - AIQ
+  - DTCR
+  stocks:
+  - VRT
+  - ETN
+  - ANET
+  - SMCI
+  - DELL
+  - CIEN
+  group: Tech & AI
+- name: Quantum
+  etfs:
+  - QTUM
+  stocks:
+  - IONQ
+  - RGTI
+  - QBTS
+  group: Tech & AI
+- name: Nuclear & Uranium
+  etfs:
+  - URA
+  - NLR
+  - URNM
+  stocks:
+  - CCJ
+  - OKLO
+  - SMR
+  - LEU
+  - BWXT
+  group: พลังงาน & วัตถุดิบ
+- name: Gold Miners
+  etfs:
+  - GDX
+  - GDXJ
+  - GLD
+  stocks:
+  - NEM
+  - AEM
+  - GOLD
+  - WPM
+  group: พลังงาน & วัตถุดิบ
+- name: Solar
+  etfs:
+  - TAN
+  - ICLN
+  stocks:
+  - FSLR
+  - ENPH
+  - NXT
+  - RUN
+  group: พลังงาน & วัตถุดิบ
+- name: Crypto-linked
+  etfs:
+  - IBIT
+  - DAPP
+  - WGMI
+  stocks:
+  - COIN
+  - MSTR
+  - HOOD
+  - MARA
+  - RIOT
+  group: Global & Alt
+- name: Space & Drones
+  etfs:
+  - ARKX
+  - UFO
+  stocks:
+  - RKLB
+  - ASTS
+  - AVAV
+  - KTOS
+  - LUNR
+  group: Global & Alt
+- name: China Tech ADR
+  etfs:
+  - KWEB
+  - CQQQ
+  stocks:
+  - BABA
+  - PDD
+  - BIDU
+  - JD
+  - BEKE
+  group: Global & Alt
+- name: Homebuilders
+  etfs:
+  - ITB
+  - XHB
+  stocks:
+  - DHI
+  - LEN
+  - PHM
+  - TOL
+  - NVR
+  group: บริโภค & Defensive
+- name: Travel & Airlines
+  etfs:
+  - JETS
+  - PEJ
+  stocks:
+  - BKNG
+  - ABNB
+  - MAR
+  - DAL
+  - UAL
+  - RCL
+  group: บริโภค & Defensive
+- name: Fintech & Payments
+  etfs:
+  - IPAY
+  - FINX
+  stocks:
+  - V
+  - MA
+  - PYPL
+  - AXP
+  - COF
+  group: การเงิน
+- name: Tech (XLK)
+  etfs:
+  - XLK
+  group: Sector ETF
+- name: Financials (XLF)
+  etfs:
+  - XLF
+  group: การเงิน
+- name: Industrials (XLI)
+  etfs:
+  - XLI
+  group: Sector ETF
+- name: Cons Discret (XLY)
+  etfs:
+  - XLY
+  group: บริโภค & Defensive
+- name: Comm Svcs (XLC)
+  etfs:
+  - XLC
+  group: Sector ETF
+- name: Real Estate (XLRE)
+  etfs:
+  - XLRE
+  group: บริโภค & Defensive
