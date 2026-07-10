@@ -88,7 +88,10 @@ details.guide summary:focus-visible{outline:2px solid var(--accent);outline-offs
 #tip b{color:var(--accent)}
 th[data-tip]{text-decoration:underline dotted #3a4656;text-underline-offset:3px;cursor:help}
 
-.tabsbar{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 18px;border-bottom:1px solid var(--border);padding-bottom:10px}
+.tabsbar{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin:0 0 18px;border-bottom:1px solid var(--border);padding-bottom:10px}
+.tabsbar .gear{margin-left:auto;font-size:16px;padding:5px 12px}
+#wlPanel{display:none;margin:-6px 0 18px}
+#wlPanel.show{display:block}
 .tabsbar button{background:transparent;border:1px solid var(--border);color:var(--ink3);border-radius:9px;
   padding:6px 16px;font-size:14px;cursor:pointer;font-family:inherit;font-weight:500}
 .tabsbar button.on{background:rgba(240,160,75,.13);border-color:var(--accent);color:var(--accent)}
@@ -127,6 +130,40 @@ footer{margin-top:34px;color:var(--ink3);font-size:12.5px;border-top:1px solid v
 
 <template id="tpl">
   <div class="tabsbar" id="tabs"></div>
+  <div id="wlPanel">
+    <details class="guide">
+      <summary>📥 อัปเดต Watchlist จาก TradingView — อัปโหลดตรงนี้ได้เลย</summary>
+      <div class="guide-body">
+        <div style="margin-bottom:10px">วางไฟล์ .txt ที่ export จาก TradingView (เมนู ⋯ → Export list)
+          หรือ paste รายชื่อ symbol ลงช่องด้านล่าง → กดอัปโหลด ระบบจะ commit เข้า repo
+          และสั่งรันคำนวณให้อัตโนมัติ (เสร็จใน ~2–3 นาที แล้วรีเฟรชหน้านี้)</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
+          <input id="wlOwner" placeholder="owner" style="width:130px" class="wlin">
+          <input id="wlRepo" placeholder="repo" style="width:170px" class="wlin">
+          <input id="wlTok" type="password" placeholder="GitHub token (fine-grained)" style="flex:1;min-width:220px" class="wlin">
+          <label style="display:flex;align-items:center;gap:5px;font-size:12.5px;color:var(--ink3)">
+            <input type="checkbox" id="wlRemember" checked>จำ token ในเบราว์เซอร์นี้</label>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-start">
+          <input id="wlName" placeholder="ชื่อลิสต์ เช่น SPDR" style="width:140px" class="wlin">
+          <input type="file" id="wlFile" accept=".txt" style="color:var(--ink3);font-size:12.5px">
+          <textarea id="wlText" rows="2" placeholder="หรือ paste เช่น NASDAQ:NVDA, AMEX:SMH, NYSE:UBER"
+            style="flex:1;min-width:240px" class="wlin"></textarea>
+          <button class="tg on" id="wlGo" style="padding:8px 18px">อัปโหลด & รันอัปเดต</button>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;margin-top:10px;flex-wrap:wrap">
+          <span style="color:var(--ink3);font-size:12.5px">ลบลิสต์:</span>
+          <select id="wlDelSel" class="wlin" style="min-width:150px"></select>
+          <button class="tg" id="wlDel" style="color:var(--lag);border-color:rgba(239,68,68,.4)">ลบลิสต์นี้</button>
+        </div>
+        <div id="wlStatus" style="margin-top:8px;font-size:13px;color:var(--ink3)"></div>
+        <div style="margin-top:8px;font-size:12px;color:var(--ink3)">
+          🔑 สร้าง token ครั้งเดียวที่ github.com → Settings → Developer settings →
+          Fine-grained tokens → เลือกเฉพาะ repo นี้ → Permissions: <b>Contents = Read and write</b>,
+          <b>Actions = Read and write</b> · token อยู่แค่ในเบราว์เซอร์ของคุณ ส่งตรงหา GitHub เท่านั้น</div>
+      </div>
+    </details>
+  </div>
   <h2 id="setupHead">Setup เด่นวันนี้ <span class="sub">สัญญาณ ≥ 4/10 เรียงตามคะแนน</span></h2>
   <div class="grid-cards" id="cards"></div>
 
@@ -193,39 +230,6 @@ footer{margin-top:34px;color:var(--ink3);font-size:12.5px;border-top:1px solid v
     </tr></thead><tbody></tbody></table>
   </div>
 
-    <details class="guide" style="margin-top:22px">
-      <summary>📥 อัปเดต Watchlist จาก TradingView — อัปโหลดตรงนี้ได้เลย</summary>
-      <div class="guide-body">
-        <div style="margin-bottom:10px">วางไฟล์ .txt ที่ export จาก TradingView (เมนู ⋯ → Export list)
-          หรือ paste รายชื่อ symbol ลงช่องด้านล่าง → กดอัปโหลด ระบบจะ commit เข้า repo
-          และสั่งรันคำนวณให้อัตโนมัติ (เสร็จใน ~2–3 นาที แล้วรีเฟรชหน้านี้)</div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
-          <input id="wlOwner" placeholder="owner" style="width:130px" class="wlin">
-          <input id="wlRepo" placeholder="repo" style="width:170px" class="wlin">
-          <input id="wlTok" type="password" placeholder="GitHub token (fine-grained)" style="flex:1;min-width:220px" class="wlin">
-          <label style="display:flex;align-items:center;gap:5px;font-size:12.5px;color:var(--ink3)">
-            <input type="checkbox" id="wlRemember" checked>จำ token ในเบราว์เซอร์นี้</label>
-        </div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-start">
-          <input id="wlName" placeholder="ชื่อลิสต์ เช่น SPDR" style="width:140px" class="wlin">
-          <input type="file" id="wlFile" accept=".txt" style="color:var(--ink3);font-size:12.5px">
-          <textarea id="wlText" rows="2" placeholder="หรือ paste เช่น NASDAQ:NVDA, AMEX:SMH, NYSE:UBER"
-            style="flex:1;min-width:240px" class="wlin"></textarea>
-          <button class="tg on" id="wlGo" style="padding:8px 18px">อัปโหลด & รันอัปเดต</button>
-        </div>
-        <div style="display:flex;gap:8px;align-items:center;margin-top:10px;flex-wrap:wrap">
-          <span style="color:var(--ink3);font-size:12.5px">ลบลิสต์:</span>
-          <select id="wlDelSel" class="wlin" style="min-width:150px"></select>
-          <button class="tg" id="wlDel" style="color:var(--lag);border-color:rgba(239,68,68,.4)">ลบลิสต์นี้</button>
-        </div>
-        <div id="wlStatus" style="margin-top:8px;font-size:13px;color:var(--ink3)"></div>
-        <div style="margin-top:8px;font-size:12px;color:var(--ink3)">
-          🔑 สร้าง token ครั้งเดียวที่ github.com → Settings → Developer settings →
-          Fine-grained tokens → เลือกเฉพาะ repo นี้ → Permissions: <b>Contents = Read and write</b>,
-          <b>Actions = Read and write</b> · token อยู่แค่ในเบราว์เซอร์ของคุณ ส่งตรงหา GitHub เท่านั้น</div>
-      </div>
-    </details>
-
   <footer>
     ระบบนี้จัดระเบียบสัญญาณ technical เพื่อประกอบการตัดสินใจเท่านั้น ไม่ใช่คำแนะนำการลงทุน ·
     คะแนน: Cipher B 35% / Hull 25% / MA50 20% / MA200 20% + ADX เป็นตัวคูณ ·
@@ -291,6 +295,11 @@ function buildTabs(){
     b.className=tab===id?'on':'';b.onclick=()=>{tab=id;hi=null;buildTabs();buildGroups();render();};el.appendChild(b);};
   mk('__themes__','ธีมหลัก');
   (D.watchlists||[]).forEach(w=>mk(w.name,w.name+' ('+w.symbols.length+')'));
+  const gear=document.createElement('button');gear.textContent='⚙ จัดการลิสต์';gear.className='gear';
+  gear.title='อัปโหลด / ลบ watchlist';
+  gear.onclick=()=>{const p=document.getElementById('wlPanel');p.classList.toggle('show');
+    const dt=p.querySelector('details');if(dt)dt.open=p.classList.contains('show');};
+  el.appendChild(gear);
 }
 function buildGroups(){
   const el=document.getElementById('grpbar');el.innerHTML='';
