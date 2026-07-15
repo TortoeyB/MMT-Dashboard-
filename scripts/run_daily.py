@@ -21,7 +21,7 @@ import pandas as pd
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from fetch_data import ROOT, load_themes, get_data, load_watchlists, load_names
-from scoring import score_series, quadrant, price_structure, significant_pattern, signal
+from scoring import score_series, quadrant, price_structure, significant_pattern, signal, signal_with_age
 
 TAIL_LEN = 8        # จำนวนจุดของหางบนกราф RRG
 HIST_LEN = 20       # เก็บคะแนนย้อนหลังกี่วัน (พอสำหรับ Δ10D + หาง 8 จุด)
@@ -37,14 +37,7 @@ def pct_change(px: pd.Series, d: int) -> float:
 def symbol_payload(sym: str, sc: pd.DataFrame, df: pd.DataFrame, name: str = "") -> dict:
     s = sc["score"]
     d5 = float(s.iloc[-1] - s.iloc[-6]) if len(s) > 5 else 0.0
-    d5_prev = float(s.iloc[-6] - s.iloc[-11]) if len(s) > 10 else 0.0
-    q_now = quadrant(float(s.iloc[-1]), d5)
-    q_prev = quadrant(float(s.iloc[-6]), d5_prev) if len(s) > 10 else q_now
-    struct = price_structure(df)
-    sc2 = sc.copy()
-    sc2["close"] = df["Close"]
-    patt = significant_pattern(sc2)
-    sig = signal(sc, q_now, q_prev, struct, patt)
+    sig, struct, patt, q_now, q_prev = signal_with_age(sc, df, s)
     last = sc.iloc[-1]
     return {
         "sym": sym,
@@ -118,14 +111,8 @@ def main():
         # price action ของธีม = ETF ตัวแรก (ถ้าไม่มีใช้สมาชิกตัวแรก)
         ref = next((e for e in t["etfs"] if e in data), members[0])
         ref_df, ref_sc = data[ref], scores[ref]
-        struct = price_structure(ref_df)
-        sc2 = ref_sc.copy()
-        sc2["close"] = ref_df["Close"]
-        patt = significant_pattern(sc2)
-
-        # signal ระดับธีม: quadrant จากคะแนนธีม, price action จาก ETF อ้างอิง,
-        # สัญญาณ Cipher B จาก ETF อ้างอิง
-        sig = signal(ref_sc, q_now, q_prev, struct, patt)
+        # signal ระดับธีม: quadrant จากคะแนนธีม, price action/Cipher จาก ETF อ้างอิง
+        sig, struct, patt, _, _ = signal_with_age(ref_sc, ref_df, th_score)
 
         px = ref_df["Close"].tail(PX_LEN)
         themes_out.append({
