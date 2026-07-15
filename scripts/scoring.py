@@ -40,17 +40,24 @@ def score_series(df: pd.DataFrame) -> pd.DataFrame:
     ind = compute_all(df)
     c = ind["close"]
 
-    ma200_sc = np.where(c > ind["ma200"], 1, -1) + np.where(slope_up(ind["ma200"], 5), 1, -1)
+    # MA200: ตำแหน่ง = % ห่างจากเส้น (±10% = เต็ม ±1) + slope ±1
+    pct200 = (c / ind["ma200"] - 1)
+    ma200_sc = np.clip(np.clip(pct200 / 0.10, -1, 1)
+                       + np.where(slope_up(ind["ma200"], 5), 1, -1), -2, 2)
 
-    ext = (c / ind["ma50"] - 1).abs() > 0.12
-    ma50_sc = (np.where(c > ind["ma50"], 1, -1)
-               + np.where(slope_up(ind["ma50"], 3), 1, -1)
-               - np.where(ext & (c > ind["ma50"]), 1, 0)
-               + np.where(ext & (c < ind["ma50"]), 1, 0))
-    ma50_sc = np.clip(ma50_sc, -2, 2)
+    # MA50: ตำแหน่ง = % ห่าง (±5% = เต็ม ±1) + slope ±1
+    #       ยืดเกิน 12% โดนหักไล่ระดับ (เตือน mean reversion)
+    pct50 = (c / ind["ma50"] - 1)
+    over = np.clip((pct50 - 0.12) / 0.06, 0, 1)     # ยืดขึ้นเกิน
+    under = np.clip((-pct50 - 0.12) / 0.06, 0, 1)   # ทิ้งลงเกิน
+    ma50_sc = np.clip(np.clip(pct50 / 0.05, -1, 1)
+                      + np.where(slope_up(ind["ma50"], 3), 1, -1)
+                      - over + under, -2, 2)
 
-    hull_sc = (np.where(ind["hma9"] > ind["hma20"], 1, -1)
-               + np.where(slope_up(ind["hma9"], 2), 1, -1))
+    # Hull: HMA9 vs HMA20 (±1) + ราคาเทียบ HMA9 (±0.5) + slope (±0.5)
+    hull_sc = np.clip(np.where(ind["hma9"] > ind["hma20"], 1.0, -1.0)
+                      + np.where(c > ind["hma9"], 0.5, -0.5)
+                      + np.where(slope_up(ind["hma9"], 2), 0.5, -0.5), -2, 2)
 
     buy3 = ind["wt_buy"].rolling(3, min_periods=1).max().astype(bool)
     sell3 = ind["wt_sell"].rolling(3, min_periods=1).max().astype(bool)
@@ -155,6 +162,41 @@ def significant_pattern(sc: pd.DataFrame, lookback: int = 3) -> dict | None:
 # ----------------------------------------------------------------
 # Buy / Sell checklist
 # ----------------------------------------------------------------
+
+def eval_at(sc: pd.DataFrame, df: pd.DataFrame, ss: pd.Series):
+    """ประเมิน quadrant/structure/pattern/signal ณ แท่งสุดท้ายของข้อมูลที่ให้มา"""
+    d5 = float(ss.iloc[-1] - ss.iloc[-6])
+    d5p = float(ss.iloc[-6] - ss.iloc[-11])
+    q_now = quadrant(float(ss.iloc[-1]), d5)
+    q_prev = quadrant(float(ss.iloc[-6]), d5p)
+    struct = price_structure(df)
+    sc_t = sc.iloc[-60:].copy()
+    sc_t["close"] = df["Close"].iloc[-60:]
+    patt = significant_pattern(sc_t)
+    sig = signal(sc, q_now, q_prev, struct, patt)
+    return sig, struct, patt, q_now, q_prev
+
+
+def signal_with_age(sc: pd.DataFrame, df: pd.DataFrame, ss: pd.Series,
+                    max_back: int = 12):
+    """เหมือน eval_at แต่เพิ่ม 'สัญญาณเกรดนี้เริ่มตั้งแต่วันไหน' (since/days)"""
+    sig, struct, patt, q_now, q_prev = eval_at(sc, df, ss)
+    if sig:
+        days, date = 0, df.index[-1]
+        for k in range(1, max_back + 1):
+            n = min(len(df), len(sc)) - k
+            m = len(ss) - k
+            if n < 220 or m < 12:
+                break
+            s_k, *_ = eval_at(sc.iloc[:n], df.iloc[:n], ss.iloc[:m])
+            if s_k and s_k["grade"] == sig["grade"]:
+                days, date = k, df.index[n - 1]
+            else:
+                break
+        sig["since"] = date.strftime("%d %b")
+        sig["days"] = days
+    return sig, struct, patt, q_now, q_prev
+
 
 def signal(sc: pd.DataFrame, quad_now: str, quad_prev: str,
            structure: dict, pattern: dict | None) -> dict | None:
