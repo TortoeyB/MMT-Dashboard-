@@ -71,8 +71,17 @@ def score_series(df: pd.DataFrame) -> pd.DataFrame:
                  + np.where(ind["mf"] > 0, 0.5, -0.5))
     cipher_sc = np.where(gold5, 2.0, np.clip(cipher_sc, -2, 2))
 
-    raw = (WEIGHTS["cipher"] * cipher_sc + WEIGHTS["hull"] * hull_sc
-           + WEIGHTS["ma50"] * ma50_sc + WEIGHTS["ma200"] * ma200_sc)
+    # NaN-safe: ตัด sub ที่เป็น NaN (เช่น MA200 ของหุ้น IPO ใหม่ที่ประวัติ < 200 วัน)
+    # ออกจากสมการ แล้ว renormalize น้ำหนักที่เหลือให้รวมเป็น 1
+    subs = {"cipher": cipher_sc, "hull": hull_sc, "ma50": ma50_sc, "ma200": ma200_sc}
+    num = np.zeros(len(c))
+    den = np.zeros(len(c))
+    for k, arr in subs.items():
+        arr = np.asarray(arr, dtype=float)
+        ok = ~np.isnan(arr)
+        num += WEIGHTS[k] * np.where(ok, arr, 0.0)
+        den += WEIGHTS[k] * ok
+    raw = np.divide(num, den, out=np.zeros_like(num), where=den > 0)
     base = 50 + raw * 25
 
     mult = np.where(ind["adx"] >= 35, 1.25, np.where(ind["adx"] < 20, 0.6, 1.0))
@@ -250,12 +259,4 @@ def signal(sc: pd.DataFrame, quad_now: str, quad_prev: str,
     if sell_score >= 7:
         return pack("SELL", min(sell_score, 10), s)
     if (buy_score >= 5 and buy_score >= sell_score
-            and structure["code"] in ("higher_low", "higher_high") and mf_green):
-        return pack("ACCUM", buy_score, b)
-    if buy_score >= 4 and buy_score >= sell_score:
-        return pack("WATCH", buy_score, b)
-    if sell_score >= 4:
-        return pack("REDUCE", sell_score, s)
-    if quad_now == "Leading" and float(last["score"]) >= 60:
-        return {"grade": "HOLD", "score": 0, "checklist": []}
-    return None
+            and structu
