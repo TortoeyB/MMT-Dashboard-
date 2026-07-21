@@ -160,4 +160,16 @@ def main():
 
     out = os.path.join(ROOT, "docs", "data.json")
     with open(out, "w", encoding="utf-8") as f:
-        json.dump(_clean(payload), 
+        json.dump(_clean(payload), f, ensure_ascii=False, separators=(",", ":"))
+    print(f"[ok] เขียน {out} — {len(themes_out)} ธีม, {len(watchlists_out)} watchlist")
+
+    # สำเนารายวันไว้ใน backup/ (sync ขึ้น Drive ได้)
+    backup_dir = os.path.join(ROOT, "backup")
+    os.makedirs(backup_dir, exist_ok=True)
+    backup = os.path.join(backup_dir, f"data_{as_of}.json")
+    shutil.copyfile(out, backup)
+    print(f"[ok] สำเนา {backup}")
+
+
+if __name__ == "__main__":
+    main()
